@@ -2,12 +2,17 @@ importScripts('lib/filename.js', 'lib/frontmatter.js', 'lib/local-rest-api.js');
 
 async function listInboxFilenames(apiKey) {
   const { url, options } = self.ChatGPTObsidianLocalRestApi.buildListRequest(apiKey);
-  const response = await fetch(url, options);
+  let response;
+  try {
+    response = await fetch(url, options);
+  } catch (networkError) {
+    throw new Error('无法连接 Obsidian，请确认 Local REST API 插件已开启');
+  }
   if (response.status === 401) {
     throw new Error('API key 无效，请到设置页检查');
   }
   if (!response.ok) {
-    throw new Error(`无法连接 Obsidian，请确认 Local REST API 插件已开启 (HTTP ${response.status})`);
+    throw new Error('无法连接 Obsidian，请确认 Local REST API 插件已开启');
   }
   const data = await response.json();
   return data.files || [];
@@ -19,12 +24,17 @@ async function writeToInbox(apiKey, filename, content) {
     filename,
     content
   );
-  const response = await fetch(url, options);
+  let response;
+  try {
+    response = await fetch(url, options);
+  } catch (networkError) {
+    throw new Error('无法连接 Obsidian，请确认 Local REST API 插件已开启');
+  }
   if (response.status === 401) {
     throw new Error('API key 无效，请到设置页检查');
   }
   if (!response.ok) {
-    throw new Error(`写入失败 (HTTP ${response.status})`);
+    throw new Error('无法连接 Obsidian，请确认 Local REST API 插件已开启');
   }
 }
 
