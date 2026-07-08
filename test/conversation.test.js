@@ -66,6 +66,16 @@ test('extractMessages throws on an unrecognized shape', () => {
   assert.throws(() => extractMessages({}), /Unexpected conversation shape/);
 });
 
+test('extractMessages throws when a node in the parent chain is missing from mapping', () => {
+  const broken = {
+    current_node: 'msg2-id',
+    mapping: {
+      'msg2-id': FIXTURE.mapping['msg2-id']
+    }
+  };
+  assert.throws(() => extractMessages(broken), /missing mapping entry/);
+});
+
 test('assembleTranscript labels turns and separates with a blank line', () => {
   const transcript = assembleTranscript([
     { role: 'user', text: 'Hi' },
