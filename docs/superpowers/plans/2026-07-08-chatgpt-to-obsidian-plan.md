@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a Chrome extension that captures the currently-open ChatGPT conversation and writes a cleaned markdown transcript into the `inbox/` folder of the `my-wiki` Obsidian vault, on a manual button click.
+**Goal:** Build a Chrome extension that captures the currently-open ChatGPT conversation and writes a cleaned markdown transcript into the `inbox/` folder of the user's Obsidian vault, on a manual button click.
 
 **Architecture:** A content script running on chatgpt.com fetches the conversation's raw JSON from ChatGPT's own `/backend-api/conversation/<id>` endpoint (falling back to DOM scraping if that fails), assembles a plain transcript. A popup triggers the capture and hands the result to a background service worker, which formats it with vault-matching YAML frontmatter and writes it to Obsidian via the **Local REST API** community plugin's local HTTP endpoint. Pure logic (filename sanitization, frontmatter building, conversation parsing, request building) lives in small dependency-free `lib/*.js` files, each loaded as a classic script that attaches its exports to a shared global object — this lets the exact same file run unmodified under Chrome (content script / service worker via `importScripts`) and under Node's built-in test runner (via `require`).
 
@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Target vault path (fixed, from spec): `/Users/ewen/Library/Mobile Documents/iCloud~md~obsidian/Documents/my-wiki/inbox/`
+- Target vault path (from spec): `<your-obsidian-vault>/inbox/`, whatever the Local REST API plugin exposes as `vault/inbox/`
 - No summarization or LLM calls anywhere in the extension — capture and clean only.
 - Manual trigger only (a popup button) — no auto-capture, no scheduling, in v1.
 - One file per capture — no same-day append/merge logic.
@@ -25,7 +25,7 @@
   ```
 - Filename: sanitized title (emoji stripped, `:` and `/` → `-`, Chinese kept), `-2`/`-3` suffix on collision — same rule the `inbox` skill uses elsewhere.
 - Obsidian Local REST API plugin, insecure HTTP mode, fixed base URL `http://127.0.0.1:27123` (avoids self-signed HTTPS cert friction since traffic never leaves the machine).
-- Project root: `/Users/ewen/Desktop/gpt_obsidian` (already a git repo with the design spec committed).
+- Project root: this repo (already a git repo with the design spec committed).
 
 ---
 
@@ -1091,7 +1091,7 @@ git commit -m "feat: add options page for the Local REST API key"
 
 - [ ] **Step 1: Verify the happy path**
 
-Capture a real conversation via the popup. Confirm in the Obsidian vault (`my-wiki/inbox/`) that:
+Capture a real conversation via the popup. Confirm in the Obsidian vault's `inbox/` that:
 - Frontmatter has `title`, `source`, `captured` (today's local date), `tags: [inbox]`.
 - The transcript reads in the correct order and any code blocks are still fenced.
 

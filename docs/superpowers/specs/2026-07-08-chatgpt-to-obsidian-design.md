@@ -9,8 +9,8 @@ created: 2026-07-08
 ## Purpose
 
 A Chrome extension that captures a ChatGPT conversation and drops a cleaned
-markdown transcript into the `inbox/` folder of the user's Obsidian vault
-(`my-wiki`), matching the vault's existing `inbox` skill conventions. No
+markdown transcript into the `inbox/` folder of the user's Obsidian vault,
+matching the vault's existing `inbox` skill conventions. No
 summarization happens in the extension — that stays a Claude Code step
 ("处理 inbox") performed later, in the vault itself.
 
@@ -24,10 +24,11 @@ summarization happens in the extension — that stays a Claude Code step
 
 ## Target vault
 
-Fixed path (matches the vault's own `CLAUDE.md` / `inbox` skill):
+Whatever vault the Obsidian Local REST API plugin is running in, matching
+that vault's own `CLAUDE.md` / `inbox` skill conventions:
 
 ```
-/Users/ewen/Library/Mobile Documents/iCloud~md~obsidian/Documents/my-wiki/inbox/
+<your-obsidian-vault>/inbox/
 ```
 
 ## Architecture
@@ -85,10 +86,11 @@ Content is cleaned of ChatGPT UI chrome (regenerate buttons, model-switch
 labels, citation footnote markup) but the actual message text is never
 paraphrased or trimmed.
 
-**Filename:** cleaned conversation title (emoji stripped, `:` → `-`, `/` →
-`-`, Chinese characters kept) — same rule as the `inbox` skill uses for
-other captures. If a file with that name already exists, append `-2`,
-`-3`, etc. One file per capture (no same-day append/merge).
+**Filename:** `<captured date> <cleaned conversation title>` (emoji
+stripped, `:` → `-`, `/` → `-`, Chinese characters kept) — same rule as the
+`inbox` skill uses for other captures, plus a leading `YYYY-MM-DD ` date
+prefix. If a file with that name already exists, append `-2`, `-3`, etc.
+One file per capture (no same-day append/merge).
 
 ## Error handling
 
@@ -106,7 +108,7 @@ v1, verification is manual:
 
 1. Load unpacked extension in `chrome://extensions`.
 2. Open a real ChatGPT conversation, click "存入 Obsidian inbox".
-3. Confirm the file appears in `my-wiki/inbox/` with correct frontmatter
+3. Confirm the file appears in the vault's `inbox/` with correct frontmatter
    and a faithful, readable transcript (spot-check against the live page).
 4. Test the collision case (capture the same conversation twice).
 5. Test the error path with the Local REST API plugin disabled.
