@@ -74,6 +74,9 @@
       };
     } catch (apiError) {
       const messages = scrapeDomFallback();
+      if (messages.length === 0) {
+        throw new Error('对话为空');
+      }
       return {
         title: conversationTitle(null),
         source,
