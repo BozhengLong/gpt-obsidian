@@ -44,13 +44,13 @@ async function saveConversationToInbox({ title, source, transcript }) {
     throw new Error('尚未设置 Local REST API key，请先打开插件设置页填写');
   }
 
-  const { sanitizeTitle, dedupeFilename } = self.ChatGPTObsidianFilename;
+  const { buildBaseName, dedupeFilename } = self.ChatGPTObsidianFilename;
   const { buildInboxMarkdown, todayLocalDate } = self.ChatGPTObsidianFrontmatter;
 
   const existingFilenames = await listInboxFilenames(apiKey);
-  const baseName = sanitizeTitle(title);
-  const filename = dedupeFilename(baseName, existingFilenames);
   const captured = todayLocalDate();
+  const baseName = buildBaseName(title, captured);
+  const filename = dedupeFilename(baseName, existingFilenames);
   const content = buildInboxMarkdown({ title, source, captured, transcript });
 
   await writeToInbox(apiKey, filename, content);
