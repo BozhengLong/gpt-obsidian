@@ -18,9 +18,14 @@ captureButton.addEventListener('click', async () => {
       throw new Error('找不到当前标签页');
     }
 
-    const extractResponse = await chrome.tabs.sendMessage(tab.id, {
-      type: 'EXTRACT_CONVERSATION'
-    });
+    let extractResponse;
+    try {
+      extractResponse = await chrome.tabs.sendMessage(tab.id, {
+        type: 'EXTRACT_CONVERSATION'
+      });
+    } catch (sendError) {
+      throw new Error('读取对话失败，请确认当前页面是 ChatGPT 对话');
+    }
     if (!extractResponse || !extractResponse.ok) {
       throw new Error(
         (extractResponse && extractResponse.error) ||
