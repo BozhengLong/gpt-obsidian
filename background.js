@@ -154,7 +154,8 @@ async function handleSave(payload) {
     title: payload.title,
     source: payload.source,
     captured,
-    transcript: payload.transcript
+    transcript: payload.transcript,
+    platform: payload.platform
   });
 
   const baseUrl = Api.baseUrlFor(conn);
@@ -182,7 +183,8 @@ async function handleDownload(payload) {
     title: payload.title,
     source: payload.source,
     captured,
-    transcript: payload.transcript
+    transcript: payload.transcript,
+    platform: payload.platform
   });
 
   // Service workers have no URL.createObjectURL, so hand the file over as a data URL.
