@@ -39,6 +39,8 @@ Click the extension icon while viewing any ChatGPT conversation, and it pulls th
 4. Browse to the destination folder, or type a name under **New subfolder here…** to create one.
 5. Click **"Save here"**. The popup shows the conversation title, then a success message naming the vault and exact path the file was saved to.
 
+Just want a plain file? Click **"Download as .md"** instead — it saves the same markdown (frontmatter included) to Chrome's download folder, and works even with no vault configured.
+
 ## Development
 
 ```bash

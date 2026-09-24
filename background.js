@@ -172,13 +172,36 @@ async function handleSave(payload) {
   return { label: conn.label, folder: targetFolder, filename };
 }
 
+async function handleDownload(payload) {
+  const { buildBaseName } = self.ChatGPTObsidianFilename;
+  const { buildInboxMarkdown, todayLocalDate } = self.ChatGPTObsidianFrontmatter;
+
+  const captured = todayLocalDate();
+  const filename = `${buildBaseName(payload.title, captured)}.md`;
+  const content = buildInboxMarkdown({
+    title: payload.title,
+    source: payload.source,
+    captured,
+    transcript: payload.transcript
+  });
+
+  // Service workers have no URL.createObjectURL, so hand the file over as a data URL.
+  await chrome.downloads.download({
+    url: `data:text/markdown;charset=utf-8,${encodeURIComponent(content)}`,
+    filename,
+    conflictAction: 'uniquify'
+  });
+  return { filename };
+}
+
 const HANDLERS = {
   LIST_CONNECTIONS: () => handleListConnections(),
   SET_ACTIVE_CONNECTION: (m) => handleSetActive(m.connectionId),
   DETECT_VAULTS: () => handleDetectVaults(),
   VERIFY_CONNECTION: (m) => handleVerify(m),
   LIST_SUBFOLDERS: (m) => handleListSubfolders(m),
-  SAVE_TO_INBOX: (m) => handleSave(m.payload)
+  SAVE_TO_INBOX: (m) => handleSave(m.payload),
+  DOWNLOAD_MARKDOWN: (m) => handleDownload(m.payload)
 };
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

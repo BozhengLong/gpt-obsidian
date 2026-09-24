@@ -39,6 +39,8 @@
 4. 浏览到目标文件夹,或在 **New subfolder here…** 里输入名字新建一个。
 5. 点击 **"Save here"**。弹窗会先显示对话标题,保存成功后显示提示,并给出库名 + 完整保存路径。
 
+只想要一个本地文件?点 **"Download as .md"** 即可——同样的 markdown(含 frontmatter)会存到 Chrome 的下载目录,没配置任何 vault 也能用。
+
 ## 开发
 
 ```bash

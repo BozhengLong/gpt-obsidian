@@ -8,6 +8,7 @@ const newFolderName = document.getElementById('newFolderName');
 const newFolderUse = document.getElementById('newFolderUse');
 const hereEl = document.getElementById('here');
 const captureButton = document.getElementById('capture');
+const downloadButton = document.getElementById('download');
 const previewEl = document.getElementById('preview');
 const statusEl = document.getElementById('status');
 const openOptionsButton = document.getElementById('openOptions');
@@ -135,6 +136,7 @@ async function init() {
     return;
   }
   mainEl.classList.remove('hidden');
+  document.getElementById('openOptionsMain').classList.remove('hidden');
 
   vaultSelect.innerHTML = '';
   for (const c of connections) {
@@ -191,6 +193,28 @@ function setButtonDefault() {
   captureButton.textContent = SAVE_LABEL;
 }
 
+async function extractFromActiveTab() {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab || !tab.id) throw new Error('Could not find the active tab');
+
+  let extractResponse;
+  try {
+    extractResponse = await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_CONVERSATION' });
+  } catch (sendError) {
+    // Content script not injected yet (tab predates the extension load); inject and retry once.
+    try {
+      await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['lib/conversation.js', 'content.js'] });
+      extractResponse = await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_CONVERSATION' });
+    } catch (retryError) {
+      throw new Error('Failed to read the conversation — make sure this tab is a ChatGPT conversation');
+    }
+  }
+  if (!extractResponse || !extractResponse.ok) {
+    throw new Error((extractResponse && extractResponse.error) || 'Failed to read the conversation — make sure this tab is a ChatGPT conversation');
+  }
+  return extractResponse.result;
+}
+
 captureButton.addEventListener('click', async () => {
   captureButton.disabled = true;
   setButtonWorking('Reading…');
@@ -198,32 +222,15 @@ captureButton.addEventListener('click', async () => {
   previewEl.textContent = '';
 
   try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab || !tab.id) throw new Error('Could not find the active tab');
+    const conversation = await extractFromActiveTab();
 
-    let extractResponse;
-    try {
-      extractResponse = await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_CONVERSATION' });
-    } catch (sendError) {
-      // Content script not injected yet (tab predates the extension load); inject and retry once.
-      try {
-        await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['lib/conversation.js', 'content.js'] });
-        extractResponse = await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_CONVERSATION' });
-      } catch (retryError) {
-        throw new Error('Failed to read the conversation — make sure this tab is a ChatGPT conversation');
-      }
-    }
-    if (!extractResponse || !extractResponse.ok) {
-      throw new Error((extractResponse && extractResponse.error) || 'Failed to read the conversation — make sure this tab is a ChatGPT conversation');
-    }
-
-    previewEl.textContent = `Title: ${extractResponse.result.title}`;
+    previewEl.textContent = `Title: ${conversation.title}`;
     setButtonWorking('Saving…');
     setStatus('Saving to Obsidian…', '');
 
     const saveResponse = await chrome.runtime.sendMessage({
       type: 'SAVE_TO_INBOX',
-      payload: Object.assign({}, extractResponse.result, {
+      payload: Object.assign({}, conversation, {
         connectionId: activeId,
         folder: currentFolder()
       })
@@ -249,6 +256,31 @@ captureButton.addEventListener('click', async () => {
     setButtonDefault();
   } finally {
     captureButton.disabled = false;
+  }
+});
+
+const DOWNLOAD_LABEL = '⬇️ Download as .md';
+
+downloadButton.addEventListener('click', async () => {
+  downloadButton.disabled = true;
+  downloadButton.textContent = 'Reading…';
+  setStatus('Reading conversation…', '');
+  previewEl.textContent = '';
+
+  try {
+    const conversation = await extractFromActiveTab();
+    previewEl.textContent = `Title: ${conversation.title}`;
+
+    const response = await chrome.runtime.sendMessage({ type: 'DOWNLOAD_MARKDOWN', payload: conversation });
+    if (!response || !response.ok) {
+      throw new Error((response && response.error) || 'Download failed');
+    }
+    setStatus(`Downloaded ${response.result.filename}`, 'success');
+  } catch (error) {
+    setStatus(error.message, 'error');
+  } finally {
+    downloadButton.disabled = false;
+    downloadButton.textContent = DOWNLOAD_LABEL;
   }
 });
 
